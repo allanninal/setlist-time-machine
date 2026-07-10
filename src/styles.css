@@ -8,6 +8,13 @@
   --magenta: #ff2d95;
   --violet: #a94dff;
   --grad: linear-gradient(100deg, var(--amber), var(--magenta) 55%, var(--violet));
+  /* CJK-aware fallbacks: system fonts cover non-latin glyphs (incl. in the
+     rasterised poster, since the browser draws local fonts during export). */
+  --cjk: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Meiryo',
+    'Malgun Gothic', 'Microsoft YaHei', 'Noto Sans CJK JP', 'Noto Sans CJK KR',
+    'Noto Sans CJK SC';
+  --sans: 'Inter', system-ui, -apple-system, var(--cjk), sans-serif;
+  --display: 'Anton', var(--cjk), 'Arial Black', sans-serif;
 }
 
 * {
@@ -23,7 +30,7 @@ body {
 body {
   background: var(--bg);
   color: var(--ink);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--sans);
   -webkit-font-smoothing: antialiased;
   line-height: 1.5;
 }
@@ -69,7 +76,7 @@ body {
 }
 
 .title {
-  font-family: 'Anton', 'Inter', sans-serif;
+  font-family: var(--display);
   font-weight: 400;
   font-size: clamp(40px, 8vw, 76px);
   line-height: 0.98;
@@ -275,7 +282,7 @@ body {
 }
 
 .artist-name {
-  font-family: 'Anton', sans-serif;
+  font-family: var(--display);
   font-weight: 400;
   font-size: clamp(30px, 6vw, 52px);
   line-height: 1;
@@ -480,7 +487,7 @@ body {
   background: radial-gradient(90% 60% at 50% 0%, #1a0f24, #0a0710 75%);
   color: var(--ink);
   overflow: hidden;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--sans);
 }
 
 .poster-glow {
@@ -517,7 +524,7 @@ body {
 }
 
 .poster-name {
-  font-family: 'Anton', sans-serif;
+  font-family: var(--display);
   font-weight: 400;
   font-size: 96px;
   line-height: 0.95;

@@ -1,5 +1,15 @@
 import { useRef, useState } from 'react'
-import { toPng } from 'html-to-image'
+import { toBlob } from 'html-to-image'
+
+// Shrink the artist name on the poster so long names don't overflow the fixed
+// 1080px-wide canvas (Anton is a tall, wide display face).
+function nameFontSize(name) {
+  const len = name.length
+  if (len > 22) return '58px'
+  if (len > 16) return '72px'
+  if (len > 11) return '86px'
+  return '96px'
+}
 
 // A shareable, downloadable concert-poster PNG of the setlist.
 // The poster node is rendered off-screen at a fixed size, then rasterised.
@@ -12,15 +22,34 @@ export default function Poster({ data, mmss, runtimeLabel }) {
     if (!ref.current) return
     setBusy(true)
     try {
-      const dataUrl = await toPng(ref.current, {
+      // toBlob (vs a giant data URI) is far more reliable for downloads,
+      // especially on mobile Safari.
+      const blob = await toBlob(ref.current, {
         pixelRatio: 2,
         cacheBust: true,
         backgroundColor: '#0a0710',
       })
+      if (!blob) throw new Error('empty render')
+      const fileName = `${artist.name.replace(/[^\w]+/g, '-').toLowerCase()}-dream-setlist.png`
+
+      // On mobile, prefer the native share sheet (Save to Photos, etc.).
+      const file = new File([blob], fileName, { type: 'image/png' })
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: `${artist.name} — dream setlist` })
+          return
+        } catch (shareErr) {
+          if (shareErr.name === 'AbortError') return // user dismissed the sheet
+          // otherwise fall through to a normal download
+        }
+      }
+
+      const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
-      link.download = `${artist.name.replace(/\s+/g, '-').toLowerCase()}-dream-setlist.png`
-      link.href = dataUrl
+      link.download = fileName
+      link.href = url
       link.click()
+      setTimeout(() => URL.revokeObjectURL(url), 10000)
     } catch (err) {
       console.error('poster export failed', err)
       alert('Sorry — the poster export failed. Try again.')
@@ -48,7 +77,9 @@ export default function Poster({ data, mmss, runtimeLabel }) {
               alt=""
               crossOrigin="anonymous"
             />
-            <h1 className="poster-name">{artist.name}</h1>
+            <h1 className="poster-name" style={{ fontSize: nameFontSize(artist.name) }}>
+              {artist.name}
+            </h1>
             <p className="poster-meta">
               {stats.songs} songs · {runtimeLabel(stats.runtimeSeconds)} · one perfect night
             </p>

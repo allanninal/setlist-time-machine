@@ -45,8 +45,11 @@ export function buildSetlist(hits, deep = []) {
   // borrow the most-popular deep tracks to round it out.
   let hitPool = dedupe(hits).filter((t) => t.duration > 0)
   let deepPool = dedupe(deep).filter((t) => t.duration > 0)
+  // Exclude deep tracks that duplicate a hit — by id *and* by normalized title,
+  // so an alt/live version of a hit can't resurface in the deep-cuts section.
   const hitIds = new Set(hitPool.map((t) => t.id))
-  deepPool = deepPool.filter((t) => !hitIds.has(t.id))
+  const hitTitles = new Set(hitPool.map((t) => normalizeTitle(t.title)))
+  deepPool = deepPool.filter((t) => !hitIds.has(t.id) && !hitTitles.has(normalizeTitle(t.title)))
 
   const byPop = [...hitPool].sort((a, b) => b.rank - a.rank) // biggest hit first
   if (byPop.length < 6 && deepPool.length) {

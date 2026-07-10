@@ -45,10 +45,17 @@ export async function findArtist(query) {
   const results = data.data || []
   if (results.length === 0) return null
 
-  // Prefer an exact (case-insensitive) name match, else the most-fanned artist.
+  // Deezer sometimes has duplicate artist entries — e.g. a populated romaji
+  // profile plus an empty one under the native-script name. Rank by fan count
+  // and only trust an exact name match if it's a real (non-empty) profile,
+  // so we don't land on a 0-fan duplicate that has no tracks.
   const q = query.trim().toLowerCase()
-  const exact = results.find((a) => a.name.toLowerCase() === q)
-  const best = exact || [...results].sort((a, b) => (b.nb_fan || 0) - (a.nb_fan || 0))[0]
+  const byFans = [...results].sort((a, b) => (b.nb_fan || 0) - (a.nb_fan || 0))
+  const topFans = byFans[0].nb_fan || 0
+  const exact = results.find(
+    (a) => a.name.toLowerCase() === q && (a.nb_fan || 0) >= Math.max(1, topFans * 0.2),
+  )
+  const best = exact || byFans[0]
 
   return {
     id: best.id,
