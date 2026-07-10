@@ -1,10 +1,18 @@
 // Thin client for Deezer's public API (no auth key required).
 const BASE = 'https://api.deezer.com'
+const REQUEST_TIMEOUT_MS = 8000
 
 async function deezer(path) {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { Accept: 'application/json' },
-  })
+  let res
+  try {
+    res = await fetch(`${BASE}${path}`, {
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    })
+  } catch (err) {
+    // AbortSignal.timeout throws a TimeoutError; normalise the message.
+    throw new Error(`Deezer request timed out or failed for ${path}: ${err.message}`)
+  }
   if (!res.ok) {
     throw new Error(`Deezer request failed (${res.status}) for ${path}`)
   }
@@ -14,6 +22,21 @@ async function deezer(path) {
     throw new Error(`Deezer API error: ${json.error.message || 'unknown'}`)
   }
   return json
+}
+
+// Run async tasks with a bounded concurrency so we don't fan out 30+ requests
+// at once and trip Deezer's per-IP rate limit (all Cloud Run traffic shares one IP).
+async function mapLimit(items, limit, fn) {
+  const results = new Array(items.length)
+  let cursor = 0
+  async function worker() {
+    while (cursor < items.length) {
+      const i = cursor++
+      results[i] = await fn(items[i], i)
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker))
+  return results
 }
 
 // Find the best-matching artist for a free-text query.
@@ -87,7 +110,8 @@ export async function getCatalog(artistId) {
     .filter((a) => a.record_type === 'album') // skip singles/EPs/compilations
     .slice(0, 30) // cap fan-out for speed
 
-  const albumTrackLists = await Promise.all(albums.map(getAlbumTracks))
+  // Bounded concurrency keeps us under Deezer's per-IP rate limit.
+  const albumTrackLists = await mapLimit(albums, 6, getAlbumTracks)
 
   // Deep pool = album tracks that aren't already hits, deduped by id, real songs only.
   const deepById = new Map()

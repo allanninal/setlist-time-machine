@@ -72,6 +72,11 @@ app.get('/api/setlist', async (req, res) => {
   }
 })
 
+// Unknown API routes should return JSON 404, not the SPA HTML.
+app.use('/api', (_req, res) => {
+  res.status(404).json({ error: 'Not found.' })
+})
+
 // Serve the built frontend in production.
 const distDir = path.join(__dirname, '..', 'dist')
 app.use(express.static(distDir))

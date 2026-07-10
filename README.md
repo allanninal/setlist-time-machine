@@ -45,6 +45,16 @@ npm run build
 npm start        # http://localhost:8787
 ```
 
+## Tests
+
+The setlist-curation logic is pure and covered by unit tests (Node's built-in runner, no deps):
+
+```bash
+npm test
+```
+
+Covers section ordering, "encore closes on the #1 hit", deep-cut sourcing, dedupe of remaster/live/feat variants, runtime totalling, and thin/empty catalogs.
+
 ## Deploy to Google Cloud Run
 
 No local Docker needed — Cloud Build builds the image from the `Dockerfile`:
@@ -66,6 +76,11 @@ See [`server/setlist.js`](server/setlist.js). In short:
 - The **deep** bucket (studio-album tracks that aren't hits, filtered to real songs) fills the die-hard section — picked from the ~35th percentile down so they're obscure but not filler/interludes.
 - The main set is **zig-zagged** (alternating high/low popularity) so the energy rises and dips like a real show instead of decaying monotonically.
 - The single biggest song is always saved for the **encore finale**.
+
+## Known limitations
+
+- **Non-latin scripts in the poster.** Only the *latin* font subset is bundled, so a catalog with Japanese/Korean/Cyrillic track titles will show placeholder glyphs in the exported PNG (the on-page setlist still renders fine via system fonts).
+- **Currently-charting artists.** The opener is chosen by Deezer popularity `rank`, which spikes for brand-new releases — so an artist mid-album-launch may open on a fresh single rather than a signature hit. The encore finale (the all-time #1) stays correct.
 
 ## Credits
 
