@@ -23,17 +23,15 @@ Try `Queen`, `Radiohead`, `Fleetwood Mac`, `Kendrick Lamar` — or your own obse
 
 Here's the app building Queen's dream show:
 
-![The app building Queen's dream setlist](https://raw.githubusercontent.com/allanninal/REPO/main/docs/screenshot.png)
+![The app building Queen's dream setlist](https://raw.githubusercontent.com/allanninal/setlist-time-machine/main/docs/screenshot.png)
 
 …and the downloadable concert poster it generates for Radiohead — ending, of course, on *Creep*:
 
-![Downloadable Radiohead concert poster](https://raw.githubusercontent.com/allanninal/REPO/main/docs/poster-example.png)
+![Downloadable Radiohead concert poster](https://raw.githubusercontent.com/allanninal/setlist-time-machine/main/docs/poster-example.png)
 
 ## Code
 
-{% embed https://github.com/allanninal/REPO %}
-
-<!-- Replace REPO above with the actual repository name once pushed. -->
+{% embed https://github.com/allanninal/setlist-time-machine %}
 
 ## How I Built It
 
